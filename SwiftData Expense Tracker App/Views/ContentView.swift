@@ -62,7 +62,7 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .sheet(isPresented: $isEntryFormPresented) {
+                .sheet(isPresented: $isEntryFormPresented, onDismiss: calculateTotalExpenses) {
                     EntryExpenseView(isPresented: $isEntryFormPresented)
                 }
             }
