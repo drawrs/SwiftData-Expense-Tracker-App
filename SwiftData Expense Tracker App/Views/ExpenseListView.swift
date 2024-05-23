@@ -8,14 +8,6 @@
 import SwiftUI
 import SwiftData
 
-extension Date {
-    func asFormattedString() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "E, MMM d"
-        return formatter.string(from: self)
-    }
-}
-
 struct ExpenseListView: View {
     @Environment(\.modelContext) var modelContext
     var category: Category?
@@ -27,7 +19,7 @@ struct ExpenseListView: View {
             if let expenses = category?.expenses {
                 ForEach(expenses, id: \.self) { expense in
                     NavigationLink {
-                        DetailView(expense: expense)
+                        DetailExpenseView(expense: expense)
                     } label: {
                         HStack {
                             VStack(alignment: .leading) {
@@ -59,10 +51,10 @@ struct ExpenseListView: View {
         for i in offsets {
             if let expense = category?.expenses?[i] {
                 modelContext.delete(expense)
+                print("deleted!")
             }
             
         }
-        print("perform delete")
     }
 }
 

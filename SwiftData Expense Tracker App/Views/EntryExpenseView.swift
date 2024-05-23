@@ -14,126 +14,133 @@ struct EntryExpenseView: View {
     @Query(sort: \Category.name, order: .forward) var categories: [Category]
     
     @Binding var isPresented: Bool
-    @State var category: Int = 0
-    @State var amount: Double = 0
-    @State var notes: String = ""
-    @State var date: Date = Date.now
     
-    @State var selectedPhotos: [PhotosPickerItem] = []
-    @State var selectedImageData: Data?
+    @State private var selectedCategoryID: Int?
+    @State private var amount: Double = 0
+    @State private var notes: String = ""
+    @State private var date: Date = Date.now
     
-    @State var images = [UIImage]()
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var selectedImageData: Data?
+    
+    // For preview
+    @State private var images: [UIImage] = []
     
     var body: some View {
         NavigationStack {
             Form {
-                Picker("Category", selection: $category) {
-                    Text("Choose category").tag(0)
-                    ForEach(categories, id: \.self) { category in
-                        Text("\(category.name)").tag(category.id.hashValue)
-                    }
-                }
-                .pickerStyle(.navigationLink)
-                
-                HStack {
-                    Text("Amount")
-                    Spacer()
-                    
-                    TextField("Amount:", value: $amount, format: .currency(code: "IDR"))
-                        .keyboardType(.numberPad)
-                }
-                
-                HStack {
-                    Text("Notes:")
-                    Spacer()
-                    TextField(text: $notes) {
-                        Text("expense note.")
-                    }
-                }
-                
-                DatePicker("Expenses Date", selection: $date, displayedComponents: .date)
-                
-                PhotosPicker(selection: $selectedPhotos,
-                             maxSelectionCount: 1,
-                             selectionBehavior: .ordered,
-                             matching: .images) {
-                    Label("Select a photo", systemImage: "photo")
-                }
-                             .onChange(of: selectedPhotos) { oldValue, newValue in
-                                 print("changedd!")
-                                 convertToImages()
-                             }
-                
-                
-                ForEach(images, id: \.self) { image in
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: .infinity)
-                        .clipShape(RoundedRectangle(cornerRadius: 25.0))
-                        .padding(.vertical)
-                }
-                
+                categoryPickerSection
+                amountSection
+                notesSection
+                datePickerSection
+                photoPickerSection
+                imagesSection
             }
             .navigationTitle("Entry Expenses")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
-                ToolbarItem {
-                    Button(action: {
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
                         save()
                         isPresented.toggle()
-                    }, label: {
-                        Text("Save")
-                    })
+                    }
                 }
                 
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(action: {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
                         isPresented.toggle()
-                    }, label: {
-                        Text("Cancel")
-                    })
+                    }
                 }
-            })
+            }
+        }
+    }
+    
+    private var categoryPickerSection: some View {
+        Section {
+            Picker("Category", selection: $selectedCategoryID) {
+                Text("Choose category").tag(nil as Int?)
+                ForEach(categories) { category in
+                    Text(category.name).tag(category.id.hashValue as Int?)
+                }
+            }
+            .pickerStyle(.navigationLink)
+        }
+    }
+    
+    private var amountSection: some View {
+        Section {
+            HStack {
+                Text("Amount")
+                Spacer()
+                TextField("Amount:", value: $amount, format: .currency(code: "IDR"))
+                    .keyboardType(.numberPad)
+            }
+        }
+    }
+    
+    private var notesSection: some View {
+        Section {
+            HStack {
+                Text("Notes")
+                Spacer()
+                TextField("Expense note", text: $notes)
+            }
+        }
+    }
+    
+    private var datePickerSection: some View {
+        Section {
+            DatePicker("Expenses Date", selection: $date, displayedComponents: .date)
+        }
+    }
+    
+    private var photoPickerSection: some View {
+        Section {
+            PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 1, matching: .images) {
+                Label("Select a photo", systemImage: "photo")
+            }
+            .onChange(of: selectedPhotos) {
+                convertToImages()
+            }
+        }
+    }
+    
+    private var imagesSection: some View {
+        Section {
+            ForEach(images, id: \.self) { image in
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: 25.0))
+                    .padding(.vertical)
+            }
         }
     }
     
     private func save() {
+        guard let category = categories.first(where: { $0.id.hashValue == selectedCategoryID }) else { return }
+        
         let expense = Expense(amount: amount, note: notes, date: date)
         expense.photo = selectedImageData
-        expense.category = categories.filter { $0.id.hashValue == category }.first
+        expense.category = category
         modelContext.insert(expense)
+        print("saved!")
     }
     
     private func convertToImages() {
         images.removeAll()
         
-        if !selectedPhotos.isEmpty {
-            selectedPhotos.forEach { eachPhotoItem in
-                Task {
-                    if let imageData = try? await eachPhotoItem.loadTransferable(type: Data.self) {
-                        self.selectedImageData = imageData // for saving to SwiftData
-                        
-                        // For user image preview
-                        if let image = UIImage(data: imageData) {
-                            images.append(image)
-                        }
+        for eachPhotoItem in selectedPhotos {
+            Task {
+                if let imageData = try? await eachPhotoItem.loadTransferable(type: Data.self) {
+                    selectedImageData = imageData
+                    if let image = UIImage(data: imageData) {
+                        images.append(image)
                     }
                 }
             }
         }
-    }
-    
-    private var currencyFormatter: NumberFormatter {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "IDR"
-        formatter.currencySymbol = "Rp"
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-        formatter.groupingSeparator = "."
-        formatter.usesGroupingSeparator = true
-        return formatter
     }
 }
 
