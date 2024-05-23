@@ -11,15 +11,15 @@ import SwiftData
 
 struct ContentView: View {
     @Query(sort: \Category.name, order: .forward) var categories: [Category]
-        @Environment(\.modelContext) var modelContext
-        
-        @State var isEntryFormPresented: Bool = false
-        @State var isCategoryInputPresented: Bool = false
-        @State var isEditCategoryInputPresented: Bool = false
-        
-        @State var categoryName: String = ""
-        @State var totalExpenses: Double = 0
-        @State var selectedCategory: Category?
+    @Environment(\.modelContext) var modelContext
+    
+    @State var isEntryFormPresented: Bool = false
+    @State var isCategoryInputPresented: Bool = false
+    @State var isEditCategoryInputPresented: Bool = false
+    
+    @State var categoryName: String = ""
+    @State var totalExpenses: Double = 0
+    @State var selectedCategory: Category?
     
     var body: some View {
         NavigationStack {
@@ -29,15 +29,15 @@ struct ContentView: View {
             }
             .listStyle(.insetGrouped)
             .sheet(isPresented: $isCategoryInputPresented) {
-                            CategoryInputView(categoryName: $categoryName) {
-                                saveCategory()
-                            }
-                        }
-                        .sheet(isPresented: $isEditCategoryInputPresented) {
-                            CategoryInputView(categoryName: $categoryName) {
-                                saveEditCategory()
-                            }
-                        }
+                CategoryInputView(categoryName: $categoryName) {
+                    saveCategory()
+                }
+            }
+            .sheet(isPresented: $isEditCategoryInputPresented) {
+                CategoryInputView(categoryName: $categoryName) {
+                    saveEditCategory()
+                }
+            }
             .onAppear {
                 calculateTotalExpenses()
             }
