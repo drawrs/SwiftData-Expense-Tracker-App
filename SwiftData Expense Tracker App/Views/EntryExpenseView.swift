@@ -10,8 +10,6 @@ import PhotosUI
 import SwiftData
 
 struct EntryExpenseView: View {
-    @Environment(\.modelContext) var modelContext
-    @Query(sort: \Category.name, order: .forward) var categories: [Category]
     
     @Binding var isPresented: Bool
     
@@ -59,8 +57,8 @@ struct EntryExpenseView: View {
         Section {
             Picker("Category", selection: $selectedCategoryID) {
                 Text("Choose category").tag(nil as Int?)
-                ForEach(categories) { category in
-                    Text(category.name).tag(category.id.hashValue as Int?)
+                ForEach(0...10, id: \.self) { category in
+                    Text("\(category)").tag(category)
                 }
             }
             .pickerStyle(.navigationLink)
@@ -112,19 +110,13 @@ struct EntryExpenseView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 25.0))
-                    .padding(.vertical)
+                    .clipShape(RoundedRectangle(cornerRadius: 10.0))
+                    .padding(.vertical, 10)
             }
         }
     }
     
     private func save() {
-        guard let category = categories.first(where: { $0.id.hashValue == selectedCategoryID }) else { return }
-        
-        let expense = Expense(amount: amount, note: notes, date: date)
-        expense.photo = selectedImageData
-        expense.category = category
-        modelContext.insert(expense)
         print("saved!")
     }
     

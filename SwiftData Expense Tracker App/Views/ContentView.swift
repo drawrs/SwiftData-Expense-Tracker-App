@@ -6,20 +6,16 @@
 //
 
 import SwiftUI
-import SwiftData
 
 
 struct ContentView: View {
-    @Query(sort: \Category.name, order: .forward) var categories: [Category]
-    @Environment(\.modelContext) var modelContext
-    
+        
     @State var isEntryFormPresented: Bool = false
     @State var isCategoryInputPresented: Bool = false
     @State var isEditCategoryInputPresented: Bool = false
     
     @State var categoryName: String = ""
     @State var totalExpenses: Double = 0
-    @State var selectedCategory: Category?
     
     var body: some View {
         NavigationStack {
@@ -50,7 +46,7 @@ struct ContentView: View {
                 Text("Total Spending")
                     .font(.headline)
                     .multilineTextAlignment(.center)
-                Text(totalExpenses.asRupiah())
+                Text("Rp 17.000.000")
                     .font(.largeTitle)
                     .padding(5)
                 
@@ -72,30 +68,26 @@ struct ContentView: View {
     
     private var topSpendingSection: some View {
         Section {
-            ForEach(categories, id: \.self) { category in
-                NavigationLink(destination: ExpenseListView(category: category)) {
+            ForEach(0...10, id: \.self) { category in
+                NavigationLink(destination: ExpenseListView()) {
                     VStack {
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(category.name)
+                                Text("\(category)")
                                     .font(.headline)
-                                Text(category.totalExpenses().asRupiah())
+                                Text("Rp 200.000")
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(category.expensePercentage(of: totalExpenses))
+                            Text("100 %")
                                 .font(.headline)
                         }
-                        ProgressView(value: category.progressValue(for: totalExpenses))
-                            .onAppear {
-                                print(CGFloat(category.totalExpenses() / totalExpenses))
-                            }
+                        ProgressView(value: 1)
                     }
                 }
                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
                     Button {
-                        selectedCategory = category
-                        categoryName = category.name
+                        
                         isEditCategoryInputPresented.toggle()
                     } label: {
                         Text("Edit")
@@ -121,36 +113,23 @@ struct ContentView: View {
     }
     
     private func calculateTotalExpenses() {
-        totalExpenses = categories.reduce(0) { $0 + $1.totalExpenses() }
+        
     }
     
     private func delete(at offsets: IndexSet) {
         for i in offsets {
-            let category = categories[i]
-            modelContext.delete(category)
-            print("deleted!")
+            
         }
     }
     
     private func saveCategory() {
         print("perform save")
-        let category = Category(name: categoryName)
-        modelContext.insert(category)
         categoryName = ""
-        print("saved!")
     }
     
     private func saveEditCategory() {
         print("perform edit")
-        if let category = selectedCategory {
-            category.name = categoryName
-            do {
-                try modelContext.save()
-                print("Updated!")
-            } catch {
-                print("Failed to update: \(error.localizedDescription)")
-            }
-        }
+        
     }
 }
 

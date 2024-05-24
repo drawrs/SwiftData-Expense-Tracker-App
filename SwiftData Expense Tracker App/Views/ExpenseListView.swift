@@ -9,50 +9,40 @@ import SwiftUI
 import SwiftData
 
 struct ExpenseListView: View {
-    @Environment(\.modelContext) var modelContext
+    
     var category: Category?
     
     @State var title: String = "Food & Beverage"
     
     var body: some View {
         List {
-            if let expenses = category?.expenses {
-                ForEach(expenses, id: \.self) { expense in
-                    NavigationLink {
-                        DetailExpenseView(expense: expense)
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(expense.amount.asRupiah())
-                                    .font(.headline)
-                                
-                                Text(expense.note)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text(expense.date.asFormattedString())
+            ForEach(0...10, id: \.self) { expense in
+                NavigationLink {
+                    DetailExpenseView()
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Rp 50.000")
+                                .font(.headline)
+                            
+                            Text("Note placeholder")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
+                        Spacer()
+                        Text("Tue, 5 May")
                     }
                 }
-                .onDelete(perform: delete)
-            } else {
-                HStack {
-                    Text("Empty")
-                }
             }
+            .onDelete(perform: delete)
             
         }
-        .navigationTitle(category?.name ?? "Title placeholder")
+        .navigationTitle(title)
         .navigationBarTitleDisplayMode(.large)
     }
     
     func delete(at offsets: IndexSet) {
         for i in offsets {
-            if let expense = category?.expenses?[i] {
-                modelContext.delete(expense)
-                print("deleted!")
-            }
             
         }
     }
